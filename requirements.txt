@@ -1,0 +1,8 @@
+fastapi
+gunicorn
+requests
+uvicorn[standard]
+python-dotenv
+validator
+python-dotenv
+click
