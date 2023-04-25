@@ -7,14 +7,15 @@ COPY requirements.txt ./
 RUN pip install --no-cache-dir -r requirements.txt
 
 USER app
-COPY gunicorn.conf.py server.py ./
+COPY showmock ./showmock
 COPY data ./data
 
 ENV BIND=0.0.0.0:8000
 ENV DATA_DIR=./data
 ENV DEFAULT_CONTENT_TYPE=application/json
 
-CMD gunicorn -c gunicorn.conf.py server:app
+ENTRYPOINT ["python", "-m", "showmock"]
+CMD []
 
 EXPOSE 8000
 VOLUME ["/app/data"]

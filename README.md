@@ -9,6 +9,13 @@
 python -m showmock /app/data --content-type application/json
 ```
 
+コンテナ版
+
+```
+docker run --rm -it -p 8000:8000 -v $(pwd)/data:/app/data ghcr.io/showtatsu/showmock /app/data
+```
+
+
 # 設定値
 
 | name                 | default          | description                  |
