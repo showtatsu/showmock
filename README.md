@@ -12,17 +12,17 @@ python -m showmock /app/data --content-type application/json
 コンテナ版
 
 ```
-docker run --rm -it -p 8000:8000 -v $(pwd)/data:/app/data ghcr.io/showtatsu/showmock /app/data
+docker run --rm -it -p 8000:8000 -v $(pwd)/data:/app/data ghcr.io/showtatsu/showmock:master /app/data
 ```
 
 
 # 設定値
 
-| name                 | default          | description                  |
-| -------------------- | ---------------- | ---------------------------- |
-| DATA_DIR             | /app/data        | モックデータのルートディレクトリ   |
-| DEFAULT_CONTENT_TYPE | application/json | デフォルトで応答するContent-Type |
-| BIND                 | 0.0.0.0:8080     | gunicornサーバがListenするポート |
+| 起動引数  | 環境変数    | default          | description                  |
+| --------- | -------------------- | ---------------- | ---------------------------- |
+| (１つ目の位置引数) | `DATA_DIR`    | ./data         | モックデータのルートディレクトリ |
+| `--content-type application/json`  | `DEFAULT_CONTENT_TYPE` | `application/json` | デフォルトで応答するContent-Type |
+| `--bind 0.0.0.0:8000` | `BIND`     | 0.0.0.0:8000   | gunicornサーバがListenするポート |
 
 # ディレクトリ構造
 
