@@ -24,6 +24,7 @@ class MockDomain():
     def __init__(self,
                  domain_dir: str,
                  default_content_type: str = 'application/json',
+                 required_content_type_header: str = 'required-content-type',
                  supported_accept_headers: Optional[list[str]] = SUPPORTED_ACCEPT_HEADERS,
                  empty: bool = False,
                  ) -> None:
@@ -37,6 +38,7 @@ class MockDomain():
         self.meta = self.__class__.Meta(os.path.join(domain_dir, self.__class__.meta_file))
         self.default_content_type = default_content_type
         self.supported_accept_headers = supported_accept_headers
+        self.required_content_type_header = required_content_type_header
         self.empty = empty
         self.logger = logging.getLogger("showmock")
 
@@ -92,7 +94,7 @@ class MockDomain():
         """
         return cls(domain_dir='/dev/null', empty=True)
 
-    def get_response(self, method: str, path: str, accept: str, params: Optional[dict] = dict()) -> Response:
+    def get_response(self, method: str, path: str, headers: dict, params: Optional[dict] = dict()) -> Response:
         """ リクエストの情報を元に、モックモデルからコンテンツを読み出します。
 
         Args:
@@ -111,28 +113,28 @@ class MockDomain():
         else:
             filepath = os.path.join(self.domain_dir, method, path)
 
-        headers = self.meta.headers
+        res_headers = self.meta.headers
         if os.path.isdir(filepath):
             filepath = os.path.join(filepath, self.__class__.index_file)
-        media = self.get_media_type(accept)
+        media = self.get_media_type(headers)
 
         self.logger.debug(f"Search: {method} {self.domain}/{path} -> {filepath}")
 
         # Empty mock
         if self.empty:
-            response = Response(content=None, status_code=404, media_type=media, headers=headers)
+            response = Response(content=None, status_code=404, media_type=media, headers=res_headers)
         # Not found
         elif not os.path.isfile(filepath):
-            response = Response(content=None, status_code=404, media_type=media, headers=headers)
+            response = Response(content=None, status_code=404, media_type=media, headers=res_headers)
         # Contents
         else:
             with open(filepath, 'rb') as reader:
                 content = reader.read()
                 reader.close()
-            response = Response(content=content, status_code=200, media_type=media, headers=headers)
+            response = Response(content=content, status_code=200, media_type=media, headers=res_headers)
         return response
 
-    def get_media_type(self, accept: str) -> str:
+    def get_media_type(self, headers: dict) -> str:
         """ 応答するContent-Typeヘッダを生成します。
 
         Args:
@@ -141,7 +143,10 @@ class MockDomain():
         Returns:
             str: Content-Typeに付与すべき文字列
         """
-        if accept in self.supported_accept_headers:
+        accept = headers.get('accept')
+        if self.required_content_type_header and (self.required_content_type_header in headers):
+            media = headers[self.required_content_type_header]
+        elif accept in self.supported_accept_headers:
             media = accept
         elif self.meta.content_type:
             media = self.meta.content_type

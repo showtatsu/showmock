@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Header, Response
+from fastapi import FastAPI, Header, Request, Response
 import os
 import logging
 from .mockdomain import MockDomain
@@ -11,11 +11,12 @@ SUPPORTED_ACCEPT_HEADERS = [x.lower() for x in [
     'application/xml',
 ]]
 
-
 # === 処理部 ===============================
+
 
 def create_app(data_dir: str = "data",
                default_content_type: str = "application/json",
+               required_content_type_header: str = "x-mock-content-type",
                default_host: str = "default",
                supported_accept_headers: list[str] = SUPPORTED_ACCEPT_HEADERS,
                ) -> FastAPI:
@@ -28,7 +29,10 @@ def create_app(data_dir: str = "data",
 
     log.info(f"Lookup data in {data_dir} ...")
     directories = [os.path.join(data_dir, x) for x in os.listdir(data_dir)]
-    options = dict(default_content_type=default_content_type, supported_accept_headers=supported_accept_headers)
+    options = dict(default_content_type=default_content_type,
+                   supported_accept_headers=supported_accept_headers,
+                   required_content_type_header=required_content_type_header,
+                   )
     mock_domains = [MockDomain(domain_dir=d, **options) for d in directories if os.path.isdir(d)]
     mock_servers = {d.domain: d for d in mock_domains}
 
@@ -45,30 +49,16 @@ def create_app(data_dir: str = "data",
     # FastAPI オブジェクトの定義とハンドラの追加
     app = FastAPI()
 
-    def serve(method: str, path: str, host: str = Header(), accept: str = Header()) -> Response:
+    @app.api_route(path="/{path:path}", methods=["GET", "POST", "PUT", "DELETE", "PATCH"])
+    def serve(path: str, request: Request) -> Response:
+        path = request.url.path
+        host = request.url.hostname
+        headers = request.headers
+        method = request.method
+
         mock = mock_servers.get(host)
         if mock is None:
             mock = default_mock
-        return mock.get_response(method, path=path, accept=accept, params={})
-
-    @app.get('/{path:path}')
-    async def serve_get(path: str, host: str = Header(), accept: str = Header()) -> Response:
-        return serve(method="get", path=path, host=host, accept=accept)
-
-    @app.post('/{path:path}')
-    async def serve_post(path: str, host: str = Header(), accept: str = Header()) -> Response:
-        return serve(method="post", path=path, host=host, accept=accept)
-
-    @app.put('/{path:path}')
-    async def serve_put(path: str, host: str = Header(), accept: str = Header()) -> Response:
-        return serve(method="put", path=path, host=host, accept=accept)
-
-    @app.delete('/{path:path}')
-    async def serve_delete(path: str, host: str = Header(), accept: str = Header()) -> Response:
-        return serve(method="delete", path=path, host=host, accept=accept)
-
-    @app.patch('/{path:path}')
-    async def serve_patch(path: str, host: str = Header(), accept: str = Header()) -> Response:
-        return serve(method="patch", path=path, host=host, accept=accept)
+        return mock.get_response(method, path=path, headers=headers, params={})
 
     return app
