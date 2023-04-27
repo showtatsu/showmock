@@ -104,6 +104,8 @@ class MockDomain():
         Returns:
             Response: FastAPI Responseオブジェクト
         """
+        # FastAPIが"/"を基準に正規化してくれるけど見た目怖く見えるので一応
+        path = self.normalize_path(path=path)
         if self.meta.method_free:
             filepath = os.path.join(self.domain_dir, path)
         else:
@@ -146,3 +148,9 @@ class MockDomain():
         else:
             media = self.default_content_type
         return media
+
+    def normalize_path(self, path: str) -> str:
+        s = os.path.join('/', path)
+        s = os.path.normpath(s)
+        s = s.lstrip('/')
+        return s
