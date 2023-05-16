@@ -22,6 +22,7 @@ docker run --rm -it -p 8000:8000 -v $(pwd)/data:/app/data ghcr.io/showtatsu/show
 | --------- | -------------------- | ---------------- | ---------------------------- |
 | (１つ目の位置引数) | `DATA_DIR`    | ./data         | モックデータのルートディレクトリ |
 | `--content-type application/json`  | `DEFAULT_CONTENT_TYPE` | `application/json` | デフォルトで応答するContent-Type |
+| `--default-host default`  | `DEFAULT_HOSZT` | `default` | デフォルト(Hostヘッダに適合するモックフォルダが存在しない場合)のモックフォルダ |
 | `--bind 0.0.0.0:8000` | `BIND`     | 0.0.0.0:8000   | gunicornサーバがListenするポート |
 
 # ディレクトリ構造
@@ -81,12 +82,13 @@ example.com
 `Content-Type`はモックに設定された情報とリクエストを元に、下記の優先度で決定されます。
 
 1. _meta.yml の `headers` に `content-type` が指定されていれば、その値を応答します
-2. リクエストのAcceptヘッダが下記のいずれかであれば、その値を応答します
+2. リクエストに`required-content-type`ヘッダが指定されていれば、その値を応答します
+3. リクエストのAcceptヘッダが下記のいずれかであれば、その値を応答します
   - application/json
   - application/xml
-3. _meta.yml の トップレベル に `content-type` が指定されていれば、その値を応答します
-4. DEFAULT_CONTENT_TYPE 環境変数に指定された値を応答します
-5. `application/json`を応答します
+4. _meta.yml の トップレベル に `content-type` が指定されていれば、その値を応答します
+5. DEFAULT_CONTENT_TYPE 環境変数に指定された値を応答します
+6. `application/json`を応答します
 
 
 
