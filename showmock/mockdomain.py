@@ -108,6 +108,7 @@ class MockDomain():
         """
         # FastAPIが"/"を基準に正規化してくれるけど見た目怖く見えるので一応
         path = self.normalize_path(path=path)
+        method = method.lower()
         if self.meta.method_free:
             filepath = os.path.join(self.domain_dir, path)
         else:
